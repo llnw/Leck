@@ -1,7 +1,7 @@
 # Leck
 
-a.k.a. Gerrit *like* access controls for GitHub peer-review
-a.k.a. Per-branch "permissions" on GitHub
+*  a.k.a. Gerrit *like* access controls for GitHub peer-review
+*  a.k.a. Per-branch "permissions" on GitHub
 
 Rather than embrace the "shiny" merge button on pull-requests, start a dialog and bring people into the conversation by embracing review and helping name and correlate issues. This project acts as a webhook reciever to then look over a pull-request for a few criteria:
 
