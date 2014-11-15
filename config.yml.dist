@@ -1,0 +1,7 @@
+[default]
+token: deadbeef
+required: 2
+status: true
+
+[org/repo]
+enable: true

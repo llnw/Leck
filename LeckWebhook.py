@@ -4,9 +4,7 @@
 
 import web
 
-urls = ('/.*', 'hooks')
-
-app = web.application(urls, globals())
+app = web.application(('/.*', 'hooks'), globals())
 
 
 class hooks:
