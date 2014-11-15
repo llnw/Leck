@@ -1,0 +1,6 @@
+Sum of +2 from authorized reviewers
+Proper naming of issues (e.g. xref issues/bug reports)
+Use OWNERS file parsing to determine who to notify
+Check to see if tests have run / successfully passed (status api)
+Merge comment from an authroized reviewer (to replace the merge button)
+Summarize pull-request comments into the merge commit (for review in git history)
