@@ -3,24 +3,17 @@
 #  logic for pull/peer review comments section.
 
 import web
+import LeckPullCheck
 
 app = web.application(('/.*', 'hooks'), globals())
 
 
 class hooks:
     def POST(self):
-        data = web.data()
-        print
-        print 'UA'
-        print web.ctx.env.get('HTTP_USER_AGENT')
-        print 'Event'
-        print web.ctx.env.get('HTTP_X_GITHUB_EVENT')
-        print 'Delivery'
-        print web.ctx.env.get('HTTP_X_GITHUB_DELIVERY')
-        print 'DATA RECEIVED:'
-        print data
-        print
-        return 'OK'
+        LeckPullCheck.LeckPullChecker.create_pullcheck_from_hook(
+            web.ctx.env.get('HTTP_X_GITHUB_EVENT'),
+            web.data())
+        return 'OK'  # TODO: put some logging in the return message...
 
 if __name__ == '__main__':
     app.run()

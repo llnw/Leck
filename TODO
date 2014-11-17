@@ -4,3 +4,5 @@ Use OWNERS file parsing to determine who to notify
 Check to see if tests have run / successfully passed (status api)
 Merge comment from an authroized reviewer (to replace the merge button)
 Summarize pull-request comments into the merge commit (for review in git history)
+Add better logging for trace and debug.
+reuse Chromium project OWNERS commands: https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/master/git_cl.py#2713 and https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/master/tests/owners_unittest.py (note use through: http://www.chromium.org/developers/contributing-code )

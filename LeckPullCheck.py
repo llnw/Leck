@@ -4,6 +4,7 @@
 #  based on different criteria.
 
 import github
+import json
 import re
 import ConfigParser
 
@@ -17,7 +18,9 @@ class LeckPullChecker:
         # Initialize connection from config
         self.config.read(configfile)
         self.repo = reponame if reponame else 'default'
-        self.gh = github.Github(base_url=self.config.get('default', 'github'), login_or_token=self.config.get(self.repo, 'token'))
+        self.gh = github.Github(
+            base_url=self.config.get('default', 'github'),
+            login_or_token=self.config.get(self.repo, 'token'))
 
     def check(self, pullnumber=None):
         for section in self.config.sections():
@@ -45,7 +48,7 @@ class LeckPullChecker:
 
     def _validate_pr_initial_message(self, pr, issue_comments):
         # TODO: consider breaking these out to loadable methods...
-        hasinitmsg = False # TODO: config.get help == True as well
+        hasinitmsg = False  # TODO: config.get help == True as well
         for ic in issue_comments:
             if 'Leck PR automation' in ic.body:
                 hasinitmsg = True
@@ -84,7 +87,7 @@ More info: [Leck](http://example.com/leckhelp)
         commentstotal = 0
         for ic in issue_comments:
             if '+1' in ic.body:
-	        commentstotal += 1
+                commentstotal += 1
             if '-1' in ic.body:
                 commentstotal -= 1
         return (commentstotal >= self.config.get(self.repo, 'required'))
@@ -103,6 +106,36 @@ More info: [Leck](http://example.com/leckhelp)
                 ic.delete()
                 # TODO: Summarize PR into commit message
                 # participants, merger, approvers, issue comments, review comments
+
+    @staticmethod
+    def create_pullcheck_from_hook(hook_type, data, config='config.ini'):
+        gh = github.Github()
+        reponame = None
+        pullnumber = None
+
+        js = json.loads(data)
+
+        if (hook_type == 'pull_request'):
+            repo = gh.create_from_raw_data(
+                github.Repository.Repository,
+                js['repository'])
+            pr = gh.create_from_raw_data(
+                github.PullRequest.PullRequest,
+                js['pull_request'])
+            reponame = repo.full_name
+            pullnumber = pr.number
+        elif (hook_type == 'issue_comment'):
+            repo = gh.create_from_raw_data(
+                github.Repository.Repository,
+                js['repository'])
+            issue = gh.create_from_raw_data(github.Issue.Issue, js['issue'])
+            reponame = repo.full_name
+            pullnumber = issue.number
+
+        # Note if reponame and pullnumber are None - we should still dtrt (albeit not as targeted).
+        lpc = LeckPullChecker(config, reponame)
+        lpc.check(pullnumber)
+        return lpc
 
 if __name__ == '__main__':
     #Construct based on CLI args
