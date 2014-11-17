@@ -24,3 +24,4 @@ Rules concepts
 
 *  [Gerrit: `refs/meta/config`](https://gerrit-review.googlesource.com/Documentation/config-project-config.html)
 *  [Chromium: OWNERS Files](http://www.chromium.org/developers/owners-files)
+   *  Cleaner to grep and alert than [FreeBSD/MAINTAINERS](https://github.com/freebsd/freebsd/blob/master/MAINTAINERS)

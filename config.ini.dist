@@ -2,6 +2,8 @@
 token: deadbeef
 required: 2
 status: true
+help: true
+title: \[#([A-Z]+-[0-9]+)\]
 
 [org/repo]
 enable: true
