@@ -33,14 +33,14 @@ class LeckPullChecker:
         return self
 
     def validate_pr(self, pr):
-        comments = pr.get_comments()
+        review_comments = pr.get_comments()
         issue_comments = pr.get_issue_comments()
 
         # Validate
         self._validate_pr_initial_message(pr, issue_comments)
         self._validate_pr_title(pr, issue_comments)
         # Merge (if possible)
-        self._validate_pr_merge(pr, issue_comments)
+        self._validate_pr_merge(pr, issue_comments, review_comments)
         return self
 
     def _validate_pr_initial_message(self, pr, issue_comments):
@@ -79,8 +79,18 @@ More info: [Leck](http://example.com/leckhelp)
             # Remove existing comment if the title has been corrected
             ic.delete()
 
-    def _validate_pr_merge(self, pr, issue_comments):
-        if pr.mergeable:
+    def _pr_score(self, pr, issue_comments):
+        # Returns true if comments add to > config required
+        commentstotal = 0
+        for ic in issue_comments:
+            if '+1' in ic.body:
+	        commentstotal += 1
+            if '-1' in ic.body:
+                commentstotal -= 1
+        return (commentstotal >= self.config.get(self.repo, 'required'))
+
+    def _validate_pr_merge(self, pr, issue_comments, review_comments):
+        if pr.mergeable and self._pr_score(pr, issue_comments):
             hasmergemsg = False
             issueid = None
             for ic in issue_comments:
