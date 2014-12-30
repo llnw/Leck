@@ -11,7 +11,7 @@ class LeckPullCheckerTestCase(unittest.TestCase):
     @vcr.use_cassette('tests/fixtures/LeckPullCheck.yaml')
     def test_check(self):
         """Does the check method return an instance of it's object?"""
-        lpc = LeckPullCheck.LeckPullChecker()
+        lpc = LeckPullCheck.LeckPullChecker('tests/config.ini.dist')
         retval = lpc.check()
         self.assertTrue(isinstance(retval, LeckPullCheck.LeckPullChecker))
 

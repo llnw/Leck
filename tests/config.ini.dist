@@ -1,5 +1,5 @@
 [default]
-github: https://api.github.com
+github: https://api.examplegh.com
 token: deadbeef
 required: 2
 status: true
