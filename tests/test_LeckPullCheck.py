@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import httplib2
 import unittest
 import vcr
 import LeckPullCheck

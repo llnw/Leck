@@ -27,6 +27,19 @@ Rules concepts
    *  Cleaner to grep and alert than [FreeBSD/MAINTAINERS](https://github.com/freebsd/freebsd/blob/master/MAINTAINERS)
 
 
+## Externals and dependencies
+
+Most python depencies are captured in `*requirements.txt`:
+
+```sh
+pip install -r requirements.txt
+# For testing
+# pip install -r test-requirements.txt
+```
+
+There are some additional dependencies based off the owners "Rules concepts" that have been added directly from external repos (e.g. no dependency configuration). Additional info can be found in `Leck/external/get.sh`.
+
+
 ## Testing
 
 Some of this utility can be exercised locally and unit-tested for expected behavior. Ultimately Leck is very API and data dependent; therefore, in order to accomplish a reasonable assurance of functionality the data to test the decision logic is stored in `tests/fixtures/` (originally generated and injected by the [VCR.py](https://github.com/kevin1024/vcrpy) lib). These requests response scenarios from the [GitHub API v3](https://developer.github.com/v3/) are used in conjunction with the different test scenarios to validate expected work-flow and configuration behavior.
