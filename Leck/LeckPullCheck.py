@@ -3,7 +3,7 @@
 # Loads config to connect to various repos pull-requests comments and validate
 #  based on different criteria.
 
-import github
+import github3
 import json
 import re
 import ConfigParser
@@ -18,26 +18,30 @@ class LeckPullChecker:
         # Initialize connection from config
         self.config.read(configfile)
         self.repo = reponame if reponame else 'default'
-        self.gh = github.Github(
-            base_url=self.config.get('default', 'github'),
-            login_or_token=self.config.get(self.repo, 'token'))
+        self.gh = github3.GitHubEnterprise(
+            url=self.config.get('default', 'github'),
+            token=self.config.get(self.repo, 'token'))
 
     def check(self, pullnumber=None):
         for section in self.config.sections():
             if section == 'default':
                 continue
-            repo = self.gh.get_repo(section)
+            # TODO Submit upstream helper for owner/repo shortname passing
+            section_split = section.split('/')
+            ownername = section_split[0]
+            reponame = section_split[1]
+            repo = self.gh.repository(ownername, reponame)
             # Run through tests pull-request acceptance
             if pullnumber is None:
-                for pr in repo.get_pulls():
+                for pr in repo.iter_pulls(state='open'):
                     self.validate_pr(pr)
             else:
-                self.validate_pr(repo.get_pull(pullnumber))
+                self.validate_pr(repo.pull_request(pullnumber))
         return self
 
     def validate_pr(self, pr):
-        review_comments = pr.get_comments()
-        issue_comments = pr.get_issue_comments()
+        review_comments = pr.iter_comments()
+        issue_comments = pr.iter_issue_comments()
 
         # Validate
         self._validate_pr_initial_message(pr, issue_comments)
@@ -50,11 +54,11 @@ class LeckPullChecker:
         # TODO: consider breaking these out to loadable methods...
         hasinitmsg = False  # TODO: config.get help == True as well
         for ic in issue_comments:
-            if 'Leck PR automation' in ic.body:
+            if 'Leck PR automation' in ic.body_text:
                 hasinitmsg = True
                 break
         if not hasinitmsg:
-            pr.create_issue_comment('''### Leck PR automation
+            self._pr_create_issue_comment(pr, '''### Leck PR automation
 
 Reviews pull requests for matching criteria:
 
@@ -72,12 +76,12 @@ More info: [Leck](http://example.com/leckhelp)
         hastitlemsg = False
         issueid = None
         for ic in issue_comments:
-            if 'Title should be in the format' in ic.body:
+            if 'Title should be in the format' in ic.body_text:
                 hastitlemsg = True
                 issueid = ic.id
                 break
         if not hastitlemsg and not propertitle:
-            pr.create_issue_comment('''Title should be in the format: "[#PROJ-1234] Short description."''')
+            self._pr_create_issue_comment(pr, '''Title should be in the format: "[#PROJ-1234] Short description."''')
         if hastitlemsg and propertitle and (issueid == ic.id):
             # Remove existing comment if the title has been corrected
             ic.delete()
@@ -86,9 +90,9 @@ More info: [Leck](http://example.com/leckhelp)
         # Returns true if comments add to > config required
         commentstotal = 0
         for ic in issue_comments:
-            if '+1' in ic.body:
+            if '+1' in ic.body_text:
                 commentstotal += 1
-            if '-1' in ic.body:
+            if '-1' in ic.body_text:
                 commentstotal -= 1
         return (commentstotal >= self.config.get(self.repo, 'required'))
 
@@ -97,7 +101,7 @@ More info: [Leck](http://example.com/leckhelp)
             hasmergemsg = False
             issueid = None
             for ic in issue_comments:
-                if 'merge' in ic.body:
+                if 'merge' in ic.body_text:
                     hasmergemsg = True
                     issueid = ic.id
                     break
@@ -106,6 +110,13 @@ More info: [Leck](http://example.com/leckhelp)
                 ic.delete()
                 # TODO: Summarize PR into commit message
                 # participants, merger, approvers, issue comments, review comments
+
+    def _pr_create_issue_comment(self, pr, body):
+        print pr.number
+        print pr.repository
+        print body
+        print "^ in _pr_create_issue_comment"
+
 
     @staticmethod
     def create_pullcheck_from_hook(hook_type, data, config='config.ini'):
@@ -138,6 +149,6 @@ More info: [Leck](http://example.com/leckhelp)
         return lpc
 
 if __name__ == '__main__':
-    #Construct based on CLI args
-    lpc = LeckPullChecker('config.ini.dist')
+    # Construct based on CLI args
+    lpc = LeckPullChecker()
     lpc.check()
