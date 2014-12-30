@@ -3,12 +3,12 @@
 *  a.k.a. Gerrit *like* access controls for GitHub peer-review
 *  a.k.a. Per-branch "permissions" on GitHub
 
-Rather than embrace the "shiny" merge button on pull-requests, start a dialog and bring people into the conversation by embracing review and helping name and correlate issues. This project acts as a webhook reciever to then look over a pull-request for a few criteria:
+Rather than embrace the "shiny" merge button on pull-requests, start a dialog and bring people into the conversation by embracing review and helping name and correlate issues. This project acts as a webhook receiver to then look over a pull-request for a few criteria:
 
 *  Sum of +2 from authorized reviewers
 *  Proper naming of issues (e.g. xref issues/bug reports)
 *  Check to see if tests have run / successfully passed ([status api](https://developer.github.com/v3/repos/statuses/))
-*  Merge comment from an authroized reviewer (to replace the merge button)
+*  Merge comment from an authorized reviewer (to replace the merge button)
 *  Summarize pull-request comments into the merge commit (for review in git history)
 
 
@@ -25,6 +25,18 @@ Rules concepts
 *  [Gerrit: `refs/meta/config`](https://gerrit-review.googlesource.com/Documentation/config-project-config.html)
 *  [Chromium: OWNERS Files](http://www.chromium.org/developers/owners-files)
    *  Cleaner to grep and alert than [FreeBSD/MAINTAINERS](https://github.com/freebsd/freebsd/blob/master/MAINTAINERS)
+
+
+## Testing
+
+Some of this utility can be exercised locally and unit-tested for expected behavior. Ultimately Leck is very API and data dependent; therefore, in order to accomplish a reasonable assurance of functionality the data to test the decision logic is stored in `tests/fixtures/` (originally generated and injected by the [VCR.py](https://github.com/kevin1024/vcrpy) lib). These requests response scenarios from the [GitHub API v3](https://developer.github.com/v3/) are used in conjunction with the different test scenarios to validate expected work-flow and configuration behavior.
+
+```sh
+make test # Runs lint, pep8, and unittests
+
+# see also
+make help
+```
 
 
 ## The Name
