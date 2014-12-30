@@ -39,6 +39,20 @@ pip install -r requirements.txt
 
 There are some additional dependencies based off the owners "Rules concepts" that have been added directly from external repos (e.g. no dependency configuration). Additional info can be found in `Leck/external/get.sh`.
 
+### Owners and Owners finder example
+
+```python
+>>> import glob
+>>> import os
+>>> import Leck.external.owners as owners
+>>> import pprint
+>>> owners_db = owners.Database('.', fopen=file, os_path=os.path, glob=glob.glob)
+>>> pprint.pprint(owners_db.reviewers_for(['README.md'], 'reviewinguser@example.com'))
+set(['cchristensen@llnw.com'])
+```
+
+(see also: Tests and [`owners_example.py`](https://gist.github.com/christianchristensen/557e4608d59320a03926))
+
 
 ## Testing
 

@@ -12,4 +12,4 @@ lint: # Lint (Compile...) all py files
 unittest: # Python unittest - tests dir
 	PYTHONPATH=./Leck python tests/test_*.py
 
-test: lint pep8 unittest
+test: lint unittest
