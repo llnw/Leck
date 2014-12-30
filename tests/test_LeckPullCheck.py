@@ -12,7 +12,7 @@ class LeckPullCheckerTestCase(unittest.TestCase):
         """Does the check method return an instance of it's object?"""
         lpc = LeckPullCheck.LeckPullChecker('tests/config.ini.dist')
         retval = lpc.check()
-        self.assertTrue(isinstance(retval, LeckPullCheck.LeckPullChecker))
+        self.assertIsInstance(retval, LeckPullCheck.LeckPullChecker)
 
 if __name__ == '__main__':
     unittest.main()

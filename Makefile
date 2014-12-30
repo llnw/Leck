@@ -10,6 +10,6 @@ lint: # Lint (Compile...) all py files
 	find ./Leck ./tests -name "*.py" -exec python -m py_compile {} \;
 
 unittest: # Python unittest - tests dir
-	PYTHONPATH=./Leck python tests/test_*.py
+	PYTHONPATH=./Leck find ./tests -name "test_*.py" -exec python {} \;
 
 test: lint unittest
