@@ -22,6 +22,22 @@ class LeckPullChecker:
             url=self.config.get('default', 'github'),
             token=self.config.get(self.repo, 'token'))
 
+        # Monkey patch github3 Pull Requests create issue functionality.
+        # TODO https://github.com/sigmavirus24/github3.py/issues/332
+        def create_issue_comment(self, body):
+            """Create a comment on this issue.
+            :param str body: (required), comment body
+            :returns: :class:`IssueComment <github3.issues.comment.IssueComment>`
+            """
+            json = None
+            if body:
+                owner, repo = self.repository
+                owner = owner.split('/')[-1]
+                url = self._build_url('repos', owner, repo, 'issues', str(self.number), 'comments')
+                json = self._json(self._post(url, data={'body': body}), 200)
+            return IssueComment(json, self) if json else None
+        github3.pulls.PullRequest.create_issue_comment = create_issue_comment
+
     def check(self, pullnumber=None):
         for section in self.config.sections():
             if section == 'default':
@@ -58,7 +74,7 @@ class LeckPullChecker:
                 hasinitmsg = True
                 break
         if not hasinitmsg:
-            self._pr_create_issue_comment(pr, '''### Leck PR automation
+            pr.create_issue_comment('''### Leck PR automation
 
 Reviews pull requests for matching criteria:
 
@@ -81,7 +97,7 @@ More info: [Leck](http://example.com/leckhelp)
                 issueid = ic.id
                 break
         if not hastitlemsg and not propertitle:
-            self._pr_create_issue_comment(pr, '''Title should be in the format: "[#PROJ-1234] Short description."''')
+            pr.create_issue_comment('''Title should be in the format: "[#PROJ-1234] Short description."''')
         if hastitlemsg and propertitle and (issueid == ic.id):
             # Remove existing comment if the title has been corrected
             ic.delete()
@@ -110,13 +126,6 @@ More info: [Leck](http://example.com/leckhelp)
                 ic.delete()
                 # TODO: Summarize PR into commit message
                 # participants, merger, approvers, issue comments, review comments
-
-    def _pr_create_issue_comment(self, pr, body):
-        print pr.number
-        print pr.repository
-        print body
-        print "^ in _pr_create_issue_comment"
-
 
     @staticmethod
     def create_pullcheck_from_hook(hook_type, data, config='config.ini'):
