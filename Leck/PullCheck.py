@@ -2,9 +2,16 @@
 # Pull request validation checker
 # Loads config to connect to various repos pull-requests comments and validate
 #  based on different criteria.
+# The expected flow is:
+#  LeckPullChecker (initialize connection/config) ->
+#   check (checks the repo; iterates over all PRs) ->
+#    validate_pr (iterates over a PRs comments and validates)
 
 import github3
+import glob
 import json
+import os
+import external.owners as owners
 import re
 import ConfigParser
 
@@ -40,6 +47,7 @@ class LeckPullChecker:
 
     def check(self, pullnumber=None):
         for section in self.config.sections():
+            # TODO skip section if we've been initialized by self.reponame
             if section == 'default':
                 continue
             # TODO Submit upstream helper for owner/repo shortname passing
@@ -47,6 +55,10 @@ class LeckPullChecker:
             ownername = section_split[0]
             reponame = section_split[1]
             repo = self.gh.repository(ownername, reponame)
+
+            # TODO load up owners from on-disk repo...
+            owners_db = owners.Database('.', fopen=file, os_path=os.path, glob=glob.glob)
+
             # Run through tests pull-request acceptance
             if pullnumber is None:
                 for pr in repo.iter_pulls(state='open'):
@@ -62,12 +74,16 @@ class LeckPullChecker:
         # Validate
         self._validate_pr_initial_message(pr, issue_comments)
         self._validate_pr_title(pr, issue_comments)
+        self._validate_pr_callout_reviewer(pr, issue_comments)
+
         # Merge (if possible)
+        # TODO Status API check (pass) before allowing to merge
         self._validate_pr_merge(pr, issue_comments, review_comments)
         return self
 
     def _validate_pr_initial_message(self, pr, issue_comments):
         # TODO: consider breaking these out to loadable methods...
+        # TODO: Remove the help message after N comments or by other authors?
         hasinitmsg = False  # TODO: config.get help == True as well
         for ic in issue_comments:
             if 'Leck PR automation' in ic.body_text:
@@ -102,8 +118,20 @@ More info: [Leck](http://example.com/leckhelp)
             # Remove existing comment if the title has been corrected
             ic.delete()
 
+    def _validate_pr_callout_reviewer(self, pr, issue_comments):
+        hasreviewercalloutmsg = False
+        issueid = None
+        for ic in issue_comments:
+            if ' please review this.' in ic.body_text:
+                hastitlemsg = True
+                issueid = ic.id
+                break
+        if not hasreviewercalloutmsg:
+            pr.create_issue_comment('''(randomly selected by OWNERS file) please review this.''')
+
     def _pr_score(self, pr, issue_comments):
         # Returns true if comments add to > config required
+        # TODO validate score from reviewer
         commentstotal = 0
         for ic in issue_comments:
             if '+1' in ic.body_text:
