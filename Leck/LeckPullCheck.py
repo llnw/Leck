@@ -120,26 +120,19 @@ More info: [Leck](http://example.com/leckhelp)
 
     @staticmethod
     def create_pullcheck_from_hook(hook_type, data, config='config.ini'):
-        gh = github.Github()
         reponame = None
         pullnumber = None
 
         js = json.loads(data)
 
         if (hook_type == 'pull_request'):
-            repo = gh.create_from_raw_data(
-                github.Repository.Repository,
-                js['repository'])
-            pr = gh.create_from_raw_data(
-                github.PullRequest.PullRequest,
-                js['pull_request'])
+            repo = github3.repos.Repository(js['repository'])
+            pr = github3.pulls.PullRequest(js['pull_request'])
             reponame = repo.full_name
             pullnumber = pr.number
         elif (hook_type == 'issue_comment'):
-            repo = gh.create_from_raw_data(
-                github.Repository.Repository,
-                js['repository'])
-            issue = gh.create_from_raw_data(github.Issue.Issue, js['issue'])
+            repo = github3.repos.Repository(js['repository'])
+            issue = github3.issues.Issue(js['issue'])
             reponame = repo.full_name
             pullnumber = issue.number
 
