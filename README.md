@@ -53,6 +53,13 @@ set(['cchristensen@llnw.com'])
 
 (see also: Tests and [`owners_example.py`](https://gist.github.com/christianchristensen/557e4608d59320a03926))
 
+#### Repo dependency setup for Leck
+
+`config.ini` Should have the associated on disk repo location configured for the section under `repoowner`. The assumptions for this directory are:
+
+*  The repo and the keys to update it are under control of the user running the Leck program (e.g. it will shell out to perform git updates)
+*  It will be reset to the pull-requests base of comparison to perform the lookup of the OWNERS information.
+
 
 ## Testing
 
