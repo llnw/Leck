@@ -8,3 +8,4 @@ title: \[#([A-Z]+-[0-9]+)\]
 
 [org/repo]
 enable: true
+repoforowners: /tmp/org/repo/

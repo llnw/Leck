@@ -7,19 +7,42 @@
 #   check (checks the repo; iterates over all PRs) ->
 #    validate_pr (iterates over a PRs comments and validates)
 
-import github3
 import glob
-import json
-import os
+import os # TODO consider github/http mock file lib
 import external.owners as owners
+import subprocess # TODO consider Git API lib
+
+import github3
+import json
 import re
 import ConfigParser
 
+class OwnersDB:
+    owners_db = None
+    repopath = '.'
+
+    def __init__(self, repopath='.'):
+        self.owners_db = owners.Database(repopath, fopen=file, os_path=os.path, glob=glob.glob)
+        self.repopath = repopath
+
+    def fetchReset(self, sha='origin/master'):
+        PIPE = subprocess.PIPE
+        wd = os.path.dirname(self.repopath)
+
+        # git fetch origin # note: requires repo is setup with remote as origin
+        process = subprocess.Popen(['git', 'fetch', 'origin'], cwd=wd, stdout=PIPE, stderr=PIPE)
+        stdoutput, stderroutput = process.communicate()
+        # git reset sha --hard
+        process = subprocess.Popen(['git', 'reset', sha, '--hard'], cwd=wd, stdout=PIPE, stderr=PIPE)
+        stdoutput, stderroutput = process.communicate()
+
+        return stdoutput
 
 class LeckPullChecker:
     config = ConfigParser.ConfigParser()
     gh = None
     repo = 'default'
+    owners_db = None
 
     def __init__(self, configfile='config.ini', reponame=None):
         # Initialize connection from config
@@ -57,7 +80,8 @@ class LeckPullChecker:
             repo = self.gh.repository(ownername, reponame)
 
             # TODO load up owners from on-disk repo...
-            owners_db = owners.Database('.', fopen=file, os_path=os.path, glob=glob.glob)
+            # TODO consider passing repo+ondisk/API representation as encapsulation
+            self.owners_db = OwnersDB(self.config.get(section, 'repoforowners'))
 
             # Run through tests pull-request acceptance
             if pullnumber is None:
@@ -68,6 +92,7 @@ class LeckPullChecker:
         return self
 
     def validate_pr(self, pr):
+        self.owners_db.fetchReset(pr.head.sha)
         review_comments = pr.iter_comments()
         issue_comments = pr.iter_issue_comments()
 
