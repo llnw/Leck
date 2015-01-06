@@ -42,7 +42,13 @@ class OwnersDB:
         # TODO validate owners exists
         reviewer = self.owners_db.reviewers_for(files, owner)
         # format as github user
+        # TODO iterate all reviewers discovered.
         return '@' + reviewer.pop().split('@')[0]
+
+    def allOwners(self, files=[], author=None):
+        self.owners_db.load_data_needed_for(files)
+        owners = self.owners_db.all_possible_owners(files, author)
+        return owners.keys()
 
 class LeckPullChecker:
     config = ConfigParser.ConfigParser()
@@ -152,33 +158,31 @@ More info: [Leck](http://example.com/leckhelp)
 
     def _validate_pr_callout_reviewer(self, pr, issue_comments):
         hasreviewercalloutmsg = False
-        issueid = None
         for ic in issue_comments:
             if ' please review this.' in ic.body_text:
-                hastitlemsg = True
-                issueid = ic.id
+                hasreviewercalloutmsg = True
                 break
         if not hasreviewercalloutmsg:
             fls = []
             for f in pr.iter_files():
                 fls.append(f.filename)
-            gh_reviewer = self.owners_db.getReviewers(fls, str(pr.user) + '@llnw.com')
+            gh_reviewer = self.owners_db.getreviewers(fls, str(pr.user) + '@llnw.com')
             pr.create_issue_comment(gh_reviewer + ''' (randomly selected by OWNERS file) please review this.''')
 
     def _pr_score(self, pr, issue_comments):
         # Returns true if comments add to > config required
-        # TODO validate score from reviewer
+        fls = []
+        for f in pr.iter_files():
+            fls.append(f.filename)
         commentstotal = 0
         for ic in issue_comments:
-            # TODO if ic.reviewer in owners_db(files)...
-            if '+1' in ic.body_text:
-                commentstotal += 1
-            if '-1' in ic.body_text:
-                commentstotal -= 1
+            if (str(ic.user) + '@llnw.com') in self.owners_db.allOwners(fls, str(pr.user) + '@llnw.com'):
+                if any(x in ic.body_text for x in ['+1', 'LGTM']):
+                    commentstotal += 1
         return (commentstotal >= self.config.get(self.repo, 'required'))
 
     def _validate_pr_merge(self, pr, issue_comments, review_comments):
-        if pr.mergeable and self._pr_score(pr, issue_comments):
+        if not pr.is_merged() and self._pr_score(pr, issue_comments):
             hasmergemsg = False
             issueid = None
             for ic in issue_comments:
