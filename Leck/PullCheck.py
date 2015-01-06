@@ -38,6 +38,12 @@ class OwnersDB:
 
         return stdoutput
 
+    def getReviewers(self, files=[], owner=None):
+        # TODO validate owners exists
+        reviewer = self.owners_db.reviewers_for(files, owner)
+        # format as github user
+        return '@' + reviewer.pop().split('@')[0]
+
 class LeckPullChecker:
     config = ConfigParser.ConfigParser()
     gh = None
@@ -92,7 +98,8 @@ class LeckPullChecker:
         return self
 
     def validate_pr(self, pr):
-        self.owners_db.fetchReset(pr.head.sha)
+        # Validate the PR on the current base.
+        self.owners_db.fetchReset(pr.base.sha)
         review_comments = pr.iter_comments()
         issue_comments = pr.iter_issue_comments()
 
@@ -119,7 +126,7 @@ class LeckPullChecker:
 
 Reviews pull requests for matching criteria:
 
-*  Sum of +2 from authorized reviewers (comment with "+1" or ":+1:", if authorized)
+*  Sum of +1 from authorized reviewers (comment with "+1", "LGTM", or ":+1:", if authorized)
 *  Merge comment from an authroized reviewer (comment with "merge", if authorized; to replace the merge button)
 *  Summarize pull-request comments into the merge commit (for review in git history)
 
@@ -152,13 +159,18 @@ More info: [Leck](http://example.com/leckhelp)
                 issueid = ic.id
                 break
         if not hasreviewercalloutmsg:
-            pr.create_issue_comment('''(randomly selected by OWNERS file) please review this.''')
+            fls = []
+            for f in pr.iter_files():
+                fls.append(f.filename)
+            gh_reviewer = self.owners_db.getReviewers(fls, str(pr.user) + '@llnw.com')
+            pr.create_issue_comment(gh_reviewer + ''' (randomly selected by OWNERS file) please review this.''')
 
     def _pr_score(self, pr, issue_comments):
         # Returns true if comments add to > config required
         # TODO validate score from reviewer
         commentstotal = 0
         for ic in issue_comments:
+            # TODO if ic.reviewer in owners_db(files)...
             if '+1' in ic.body_text:
                 commentstotal += 1
             if '-1' in ic.body_text:
