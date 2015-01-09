@@ -53,16 +53,16 @@ class OwnersDB:
 class LeckPullChecker:
     config = ConfigParser.ConfigParser()
     gh = None
-    repo = 'default'
+    reponame = 'default'
     owners_db = None
 
     def __init__(self, configfile='config.ini', reponame=None):
         # Initialize connection from config
         self.config.read(configfile)
-        self.repo = reponame if reponame else 'default'
+        self.reponame = reponame if reponame else 'default'
         self.gh = github3.GitHubEnterprise(
             url=self.config.get('default', 'github'),
-            token=self.config.get(self.repo, 'token'))
+            token=self.config.get(self.reponame, 'token'))
 
         # Monkey patch github3 Pull Requests create issue functionality.
         # TODO https://github.com/sigmavirus24/github3.py/issues/332
@@ -89,7 +89,7 @@ class LeckPullChecker:
             section_split = section.split('/')
             ownername = section_split[0]
             reponame = section_split[1]
-            repo = self.gh.repository(ownername, reponame)
+            self.repo = self.gh.repository(ownername, reponame)
 
             # TODO load up owners from on-disk repo...
             # TODO consider passing repo+ondisk/API representation as encapsulation
@@ -97,10 +97,10 @@ class LeckPullChecker:
 
             # Run through tests pull-request acceptance
             if pullnumber is None:
-                for pr in repo.iter_pulls(state='open'):
+                for pr in self.repo.iter_pulls(state='open'):
                     self.validate_pr(pr)
             else:
-                self.validate_pr(repo.pull_request(pullnumber))
+                self.validate_pr(self.repo.pull_request(pullnumber))
         return self
 
     def validate_pr(self, pr):
@@ -140,7 +140,7 @@ More info: [Leck](http://example.com/leckhelp)
 ''')
 
     def _validate_pr_title(self, pr, issue_comments):
-        rtitle = re.compile(self.config.get(self.repo, 'title'))
+        rtitle = re.compile(self.config.get(self.reponame, 'title'))
         propertitle = rtitle.match(pr.title)
 
         hastitlemsg = False
@@ -177,12 +177,16 @@ More info: [Leck](http://example.com/leckhelp)
         commentstotal = 0
         for ic in issue_comments:
             if (str(ic.user) + '@llnw.com') in self.owners_db.allOwners(fls, str(pr.user) + '@llnw.com'):
-                if any(x in ic.body_text for x in ['+1', 'LGTM']):
+                if any(x in ic.body_text.lower() for x in ['+1', 'lgtm']):
                     commentstotal += 1
-        return (commentstotal >= self.config.get(self.repo, 'required'))
+        return (commentstotal >= self.config.get(self.reponame, 'required'))
 
     def _validate_pr_merge(self, pr, issue_comments, review_comments):
+        # TODO: validate status from other systems... (use the status api?)
+        #  consider using comments other than reviewers as a blocker.
         if not pr.is_merged() and self._pr_score(pr, issue_comments):
+            self.repo.create_status(pr.head.sha, 'success', 'https://github.com/llnw/Leck')
+
             hasmergemsg = False
             issueid = None
             for ic in issue_comments:
@@ -191,10 +195,11 @@ More info: [Leck](http://example.com/leckhelp)
                     issueid = ic.id
                     break
             if hasmergemsg and (issueid == ic.id):
-                # Remove existing comment if the title has been corrected
-                ic.delete()
                 # TODO: Summarize PR into commit message
                 # participants, merger, approvers, issue comments, review comments
+                pass
+        else:
+            self.repo.create_status(pr.head.sha, 'pending', 'https://github.com/llnw/Leck')
 
     @staticmethod
     def create_pullcheck_from_hook(hook_type, data, config='config.ini'):
