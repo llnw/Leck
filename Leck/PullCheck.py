@@ -128,15 +128,13 @@ class LeckPullChecker:
                 hasinitmsg = True
                 break
         if not hasinitmsg:
-            pr.create_issue_comment('''### Leck PR automation
+            pr.create_issue_comment('''[Leck PR automation](https://github.com/llnw/Leck)
 
 Reviews pull requests for matching criteria:
 
 *  Sum of +1 from authorized reviewers (comment with "+1", "LGTM", or ":+1:", if authorized)
 *  Merge comment from an authroized reviewer (comment with "merge", if authorized; to replace the merge button)
 *  Summarize pull-request comments into the merge commit (for review in git history)
-
-More info: [Leck](http://example.com/leckhelp)
 ''')
 
     def _validate_pr_title(self, pr, issue_comments):
