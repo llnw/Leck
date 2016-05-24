@@ -1,6 +1,6 @@
 Sum of +2 from authorized reviewers
 Check to see if tests have run / successfully passed (status api)
-Merge comment from an authroized reviewer (to replace the merge button)
+Merge comment from an authorized reviewer (to replace the merge button)
 Summarize pull-request comments into the merge commit (for review in git history)
 Add better logging for trace and debug.
 Test owners with git fixture gzipped/init'd
