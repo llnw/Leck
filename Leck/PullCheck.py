@@ -133,7 +133,7 @@ class LeckPullChecker:
 Reviews pull requests for matching criteria:
 
 *  Sum of +1 from authorized reviewers (comment with "+1", "LGTM", or ":+1:", if authorized)
-*  Merge comment from an authroized reviewer (comment with "merge", if authorized; to replace the merge button)
+*  Merge comment from an authorized reviewer (comment with "merge", if authorized; to replace the merge button)
 *  Summarize pull-request comments into the merge commit (for review in git history)
 ''')
 
